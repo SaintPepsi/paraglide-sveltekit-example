@@ -1,21 +1,39 @@
-import adapter from "@sveltejs/adapter-node"
-import { vitePreprocess } from "@sveltejs/vite-plugin-svelte"
+import adapterAuto from "@sveltejs/adapter-auto";
+import cloudflareWorkersAdapter from "@sveltejs/adapter-cloudflare-workers";
+import staticAdapter from "@sveltejs/adapter-static";
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+
+function getAdapter() {
+    console.log("process.env.VITE_ADAPTER", process.env.VITE_ADAPTER);
+    switch (process.env.VITE_ADAPTER) {
+        case "capacitor":
+            return staticAdapter({
+                strict: false,
+                pages: "build/capacitor",
+                assets: "build/capacitor",
+                fallback: "index.html",
+            });
+
+        case "cloudflare-workers":
+            return cloudflareWorkersAdapter();
+
+        default:
+            return adapterAuto();
+    }
+}
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	preprocess: [vitePreprocess()],
-	kit: {
-		adapter: adapter(),
-		prerender: {
-			//Needed for correctly prerendering <link rel="alternate" hreflang="x" href="y">
-			origin: "https://github.io",
-		},
-		paths: {
-			base: "/paraglide-sveltekit/example",
-		},
-	},
+    preprocess: [vitePreprocess()],
+    kit: {
+        adapter: getAdapter(),
 
-	extensions: [".svelte", ".svx"],
-}
+        paths: {
+            base: "/paraglide-sveltekit/example",
+        },
+    },
 
-export default config
+    extensions: [".svelte", ".svx"],
+};
+
+export default config;
